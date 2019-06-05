@@ -1,5 +1,5 @@
 # Rest.li Schema Translator
-A basic GUI for translating Rest.li-compatible schema formats. Currently supports `.pdsc`, `.pdl`, and `.avsc`.
+A basic GUI for translating [Rest.li](https://rest.li)-compatible schema formats. Currently supports `.pdsc`, `.pdl`, and `.avsc`.
 
 ## How to run
 
