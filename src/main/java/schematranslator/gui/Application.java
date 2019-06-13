@@ -14,6 +14,8 @@ import java.awt.event.KeyEvent;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.net.URI;
+import java.net.URISyntaxException;
 import javax.swing.*;
 import schematranslator.FileUtil;
 import schematranslator.SchemaParserUtil;
@@ -24,10 +26,10 @@ public class Application implements Runnable {
       RecordDataSchema.RecordType.RECORD);
 
   private JFrame frame;
+  private JPanel masterPanel;
 
-  private SchemaPanel pegasusPanel;
-  private SchemaPanel pdlPanel;
-  private SchemaPanel avroPanel;
+  private SchemaPanel pegasusPanel, avroPanel, pdlPanel;
+  private JCheckBoxMenuItem showPegasus, showAvro, showPdl;
 
   private JComboBox<OptionalDefaultMode> avroOptionalDefault;
   private JCheckBox avroOverrideNamespace;
@@ -36,10 +38,25 @@ public class Application implements Runnable {
     frame = new JFrame("Rest.li Schema Translator");
     frame.setLayout(new BorderLayout());
 
-    //Create the menu bar.
+    addMenuBar();
+    addMasterPanel();
+    addOptionsPanel();
+
+    frame.setMinimumSize(new Dimension(1000, 600));
+    frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+  }
+
+  @Override
+  public void run() {
+    updatePanels(null);
+    frame.setVisible(true);
+  }
+
+  private void addMenuBar()
+  {
     JMenuBar menuBar = new JMenuBar();
 
-    //Build the first menu.
+    // Construct file menu
     JMenu fileMenu = new JMenu("File");
     fileMenu.setMnemonic(KeyEvent.VK_F);
     JMenuItem fileOpen = new JMenuItem("Open");
@@ -56,12 +73,62 @@ public class Application implements Runnable {
       }
     });
     fileMenu.add(fileOpen);
+    fileMenu.addSeparator();
+    JMenuItem exit = new JMenuItem("Exit");
+    exit.setMnemonic(KeyEvent.VK_X);
+    exit.addActionListener((actionEvent) -> System.exit(0));
+    fileMenu.add(exit);
     menuBar.add(fileMenu);
+
+    // Construct view menu
+    JMenu viewMenu = new JMenu("View");
+    viewMenu.setMnemonic(KeyEvent.VK_V);
+    showPegasus = new JCheckBoxMenuItem("Show PDSC", true);
+    showPegasus.setMnemonic(KeyEvent.VK_P);
+    showPegasus.addChangeListener((changeEvent) -> updateMasterPanel());
+    viewMenu.add(showPegasus);
+    showAvro = new JCheckBoxMenuItem("Show Avro", true);
+    showAvro.setMnemonic(KeyEvent.VK_A);
+    showAvro.addChangeListener((changeEvent) -> updateMasterPanel());
+    viewMenu.add(showAvro);
+    showPdl = new JCheckBoxMenuItem("Show PDL", true);
+    showPdl.setMnemonic(KeyEvent.VK_L);
+    showPdl.addChangeListener((changeEvent) -> updateMasterPanel());
+    viewMenu.add(showPdl);
+    menuBar.add(viewMenu);
+
+    // Construct help menu
+    JMenu helpMenu = new JMenu("Help");
+    helpMenu.setMnemonic(KeyEvent.VK_H);
+    JMenuItem aboutRestLi = new JMenuItem("About Rest.li");
+    aboutRestLi.setMnemonic(KeyEvent.VK_A);
+    aboutRestLi.addActionListener((actionEvent) -> {
+      try {
+        if (Desktop.isDesktopSupported()) {
+          Desktop desktop = Desktop.getDesktop();
+          if (desktop != null && desktop.isSupported(Desktop.Action.BROWSE)) {
+            desktop.browse(new URI("https://rest.li"));
+          }
+        }
+      } catch (URISyntaxException | IOException e) {
+        System.err.println(e);
+      }
+    });
+    helpMenu.add(aboutRestLi);
+    menuBar.add(helpMenu);
+
     frame.setJMenuBar(menuBar);
+  }
 
-    JPanel panels = new JPanel();
-    panels.setLayout(new GridLayout(1, 3));
+  private void addMasterPanel() {
+    masterPanel = new JPanel();
+    buildPanels();
+    updateMasterPanel();
+    frame.add(masterPanel, BorderLayout.CENTER);
+  }
 
+  private void buildPanels()
+  {
     pegasusPanel = new SchemaPanel("PDSC", (text) -> {
       try {
         dataSchema = SchemaParserUtil.parsePdsc(text);
@@ -71,7 +138,6 @@ public class Application implements Runnable {
         pegasusPanel.setError(true);
       }
     });
-    panels.add(pegasusPanel);
 
     avroPanel = new SchemaPanel("Avro", (text) -> {
       try {
@@ -82,7 +148,6 @@ public class Application implements Runnable {
         avroPanel.setError(true);
       }
     });
-    panels.add(avroPanel);
 
     pdlPanel = new SchemaPanel("PDL", (text) -> {
       try {
@@ -93,10 +158,10 @@ public class Application implements Runnable {
         pdlPanel.setError(true);
       }
     });
-    panels.add(pdlPanel);
+  }
 
-    frame.add(panels, BorderLayout.CENTER);
-
+  private void addOptionsPanel()
+  {
     JPanel optionsPanel = new JPanel();
     optionsPanel.setBorder(BorderFactory.createTitledBorder("DataToAvroSchemaTranslationOptions"));
     optionsPanel.setLayout(new GridLayout(0, 4, 16, 0));
@@ -112,15 +177,28 @@ public class Application implements Runnable {
     optionsPanel.add(avroOverrideNamespace);
 
     frame.add(optionsPanel, BorderLayout.SOUTH);
-
-    frame.setMinimumSize(new Dimension(1000, 600));
-    frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
   }
 
-  @Override
-  public void run() {
-    updatePanels(null);
-    frame.setVisible(true);
+  private void updateMasterPanel()
+  {
+    final int numPanels = (showPegasus.getState() ? 1 : 0) + (showAvro.getState() ? 1 : 0) + (showPdl.getState() ? 1 : 0);
+    masterPanel.setLayout(new GridLayout(1, numPanels));
+    masterPanel.removeAll();
+
+    if (showPegasus.getState()) {
+      masterPanel.add(pegasusPanel);
+    }
+
+    if (showAvro.getState()) {
+      masterPanel.add(avroPanel);
+    }
+
+    if (showPdl.getState()) {
+      masterPanel.add(pdlPanel);
+    }
+
+    masterPanel.validate();
+    masterPanel.repaint();
   }
 
   private void updatePanels(SchemaPanel except) {

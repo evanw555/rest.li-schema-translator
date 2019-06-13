@@ -1,6 +1,9 @@
 package schematranslator.gui;
 
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.util.function.Consumer;
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -18,6 +21,8 @@ public class SchemaPanel extends JPanel {
     this.add(new JLabel(title), BorderLayout.NORTH);
 
     _textArea = new JTextArea("");
+    _textArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 14));
+    _textArea.setLineWrap(true);
     _textArea.setColumns(40);
     _textArea.setTabSize(2);
     _textArea.getDocument().addDocumentListener((SimpleDocumentListener) (documentEvent) -> {
