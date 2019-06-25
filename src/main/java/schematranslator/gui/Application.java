@@ -22,6 +22,8 @@ import schematranslator.SchemaParserUtil;
 
 
 public class Application implements Runnable {
+  public static final String APP_NAME = "Rest.li Schema Translator";
+
   private DataSchema dataSchema = new RecordDataSchema(new Name("com.x.y.z.Foo"),
       RecordDataSchema.RecordType.RECORD);
 
@@ -35,7 +37,7 @@ public class Application implements Runnable {
   private JCheckBox avroOverrideNamespace;
 
   public Application() {
-    frame = new JFrame("Rest.li Schema Translator");
+    frame = new JFrame(APP_NAME);
     frame.setLayout(new BorderLayout());
 
     addMenuBar();
