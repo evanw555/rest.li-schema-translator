@@ -1,9 +1,6 @@
 package schematranslator.gui;
 
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.util.function.Consumer;
 import javax.swing.*;
 import javax.swing.border.BevelBorder;

@@ -1,7 +1,10 @@
 apply plugin: 'idea'
 apply plugin: 'java'
 
-version = '0.2.1'
+def props = new Properties()
+file("src/main/resources/schematranslator/app.properties").withInputStream { props.load(it) }
+
+version = props.getProperty("version")
 
 repositories {
   mavenCentral()
@@ -10,6 +13,8 @@ repositories {
 dependencies {
   compile 'com.linkedin.pegasus:data:24.0.2'
   compile 'com.linkedin.pegasus:data-avro:24.0.2'
+  compile 'com.fasterxml.jackson.core:jackson-core:2.9.9'
+
 }
 
 jar {
@@ -20,4 +25,10 @@ jar {
     configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
   }
   version
+}
+
+//noinspection GroovyAssignabilityCheck
+task version {
+  description 'Print current version of this application'
+  println version
 }

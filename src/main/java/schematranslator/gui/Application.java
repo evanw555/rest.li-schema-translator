@@ -14,11 +14,12 @@ import java.awt.event.KeyEvent;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.net.URI;
 import java.net.URISyntaxException;
 import javax.swing.*;
+import schematranslator.AppProperties;
 import schematranslator.FileUtil;
 import schematranslator.SchemaParserUtil;
+import schematranslator.updates.UpdateChecker;
 
 
 public class Application implements Runnable {
@@ -52,6 +53,20 @@ public class Application implements Runnable {
   public void run() {
     updatePanels(null);
     frame.setVisible(true);
+
+    // Check for updates
+    UpdateChecker updateChecker = new UpdateChecker();
+    try {
+      updateChecker.checkForUpdates(updateInfo -> {
+        if (updateInfo.isUpdateAvailable()) {
+          frame.add(new UpdateLabel(updateInfo), BorderLayout.NORTH);
+          frame.validate();
+          frame.repaint();
+        }
+      });
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 
   private void addMenuBar()
@@ -61,7 +76,7 @@ public class Application implements Runnable {
     // Construct file menu
     JMenu fileMenu = new JMenu("File");
     fileMenu.setMnemonic(KeyEvent.VK_F);
-    JMenuItem fileOpen = new JMenuItem("Open");
+    JMenuItem fileOpen = new JMenuItem("Open...");
     fileOpen.setMnemonic(KeyEvent.VK_O);
     fileOpen.addActionListener((actionEvent) -> {
       try {
@@ -102,6 +117,26 @@ public class Application implements Runnable {
     // Construct help menu
     JMenu helpMenu = new JMenu("Help");
     helpMenu.setMnemonic(KeyEvent.VK_H);
+    JMenuItem checkUpdates = new JMenuItem("Check for Updates...");
+    checkUpdates.setMnemonic(KeyEvent.VK_U);
+    checkUpdates.addActionListener((actionEvent) -> {
+      UpdateChecker updateChecker = new UpdateChecker();
+      try {
+        updateChecker.checkForUpdates((updateInfo) -> {
+          JOptionPane.showMessageDialog(frame,
+              new UpdateLabel(updateInfo),
+              "Check for Updates...",
+              JOptionPane.INFORMATION_MESSAGE);
+        });
+      } catch (IOException e) {
+        JOptionPane.showMessageDialog(frame,
+            "Unable to check for updates:\n" + e,
+            "Check for Updates...",
+            JOptionPane.ERROR_MESSAGE);
+      }
+    });
+    helpMenu.add(checkUpdates);
+    helpMenu.addSeparator();
     JMenuItem aboutRestLi = new JMenuItem("About Rest.li");
     aboutRestLi.setMnemonic(KeyEvent.VK_A);
     aboutRestLi.addActionListener((actionEvent) -> {
@@ -109,7 +144,7 @@ public class Application implements Runnable {
         if (Desktop.isDesktopSupported()) {
           Desktop desktop = Desktop.getDesktop();
           if (desktop != null && desktop.isSupported(Desktop.Action.BROWSE)) {
-            desktop.browse(new URI("https://rest.li"));
+            desktop.browse(AppProperties.getDocsUri());
           }
         }
       } catch (URISyntaxException | IOException e) {
@@ -204,7 +239,6 @@ public class Application implements Runnable {
   }
 
   private void updatePanels(SchemaPanel except) {
-    System.out.println("Update panels at " + System.currentTimeMillis());
     try {
       if (except != pegasusPanel) {
         String pegasusText = SchemaToJsonEncoder.schemaToJson(dataSchema, JsonBuilder.Pretty.INDENTED);
