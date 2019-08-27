@@ -172,6 +172,7 @@ public class Application implements Runnable {
         pegasusPanel.setError(false);
         updatePanels(pegasusPanel);
       } catch (Throwable e) {
+        e.printStackTrace();
         pegasusPanel.setError(true);
       }
     });
@@ -182,6 +183,7 @@ public class Application implements Runnable {
         avroPanel.setError(false);
         updatePanels(avroPanel);
       } catch (Throwable e) {
+        e.printStackTrace();
         avroPanel.setError(true);
       }
     });
@@ -192,6 +194,7 @@ public class Application implements Runnable {
         pdlPanel.setError(false);
         updatePanels(pdlPanel);
       } catch (Throwable e) {
+        e.printStackTrace();
         pdlPanel.setError(true);
       }
     });
