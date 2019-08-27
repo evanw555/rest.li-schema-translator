@@ -3,5 +3,7 @@
 build/
 out/
 
-# User-specific settings file
+# Project files
+*.iml
+*.ipr
 *.iws
