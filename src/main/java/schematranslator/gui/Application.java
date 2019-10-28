@@ -37,13 +37,15 @@ public class Application implements Runnable {
   private JComboBox<OptionalDefaultMode> avroOptionalDefault;
   private JCheckBox avroOverrideNamespace;
 
+  private ErrorMessagePanel _errorMessagePanel;
+
   public Application() {
     frame = new JFrame(APP_NAME);
     frame.setLayout(new BorderLayout());
 
     addMenuBar();
     addMasterPanel();
-    addOptionsPanel();
+    addLowerPanel();
 
     frame.setMinimumSize(new Dimension(1000, 600));
     frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -69,8 +71,7 @@ public class Application implements Runnable {
     }
   }
 
-  private void addMenuBar()
-  {
+  private void addMenuBar() {
     JMenuBar menuBar = new JMenuBar();
 
     // Construct file menu
@@ -164,15 +165,15 @@ public class Application implements Runnable {
     frame.add(masterPanel, BorderLayout.CENTER);
   }
 
-  private void buildPanels()
-  {
+  private void buildPanels() {
     pegasusPanel = new SchemaPanel("PDSC", (text) -> {
       try {
         dataSchema = SchemaParserUtil.parsePdsc(text);
+        _errorMessagePanel.clear();
         pegasusPanel.setError(false);
         updatePanels(pegasusPanel);
       } catch (Throwable e) {
-        e.printStackTrace();
+        _errorMessagePanel.setError(e);
         pegasusPanel.setError(true);
       }
     });
@@ -180,10 +181,11 @@ public class Application implements Runnable {
     avroPanel = new SchemaPanel("Avro", (text) -> {
       try {
         dataSchema = SchemaParserUtil.parseAvro(text);
+        _errorMessagePanel.clear();
         avroPanel.setError(false);
         updatePanels(avroPanel);
       } catch (Throwable e) {
-        e.printStackTrace();
+        _errorMessagePanel.setError(e);
         avroPanel.setError(true);
       }
     });
@@ -191,20 +193,25 @@ public class Application implements Runnable {
     pdlPanel = new SchemaPanel("PDL", (text) -> {
       try {
         dataSchema = SchemaParserUtil.parsePdl(text);
+        _errorMessagePanel.clear();
         pdlPanel.setError(false);
         updatePanels(pdlPanel);
       } catch (Throwable e) {
-        e.printStackTrace();
+        _errorMessagePanel.setError(e);
         pdlPanel.setError(true);
       }
     });
   }
 
-  private void addOptionsPanel()
-  {
+  private void addLowerPanel() {
+    JTabbedPane tabbedPane = new JTabbedPane();
+
+    _errorMessagePanel = new ErrorMessagePanel();
+    tabbedPane.addTab("Errors", _errorMessagePanel);
+
     JPanel optionsPanel = new JPanel();
     optionsPanel.setBorder(BorderFactory.createTitledBorder("DataToAvroSchemaTranslationOptions"));
-    optionsPanel.setLayout(new GridLayout(0, 4, 16, 0));
+    optionsPanel.setLayout(new GridLayout(0, 2, 16, 0));
 
     avroOptionalDefault = new JComboBox<>(OptionalDefaultMode.values());
     avroOptionalDefault.addActionListener(actionEvent -> updatePanels(null));
@@ -215,12 +222,12 @@ public class Application implements Runnable {
     avroOverrideNamespace.addItemListener(itemEvent -> updatePanels(null));
     optionsPanel.add(new JLabel("generator.avro.namespace.override", SwingConstants.RIGHT));
     optionsPanel.add(avroOverrideNamespace);
+    tabbedPane.addTab("Avro Options", optionsPanel);
 
-    frame.add(optionsPanel, BorderLayout.SOUTH);
+    frame.add(tabbedPane, BorderLayout.SOUTH);
   }
 
-  private void updateMasterPanel()
-  {
+  private void updateMasterPanel() {
     final int numPanels = (showPegasus.getState() ? 1 : 0) + (showAvro.getState() ? 1 : 0) + (showPdl.getState() ? 1 : 0);
     masterPanel.setLayout(new GridLayout(1, numPanels));
     masterPanel.removeAll();
