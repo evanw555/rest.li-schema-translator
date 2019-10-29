@@ -1,22 +1,62 @@
 apply plugin: 'idea'
 apply plugin: 'java'
 
-def props = new Properties()
-file("src/main/resources/schematranslator/app.properties").withInputStream { props.load(it) }
-
-version = props.getProperty("version")
-
 repositories {
   mavenCentral()
 }
 
-dependencies {
-  compile 'com.linkedin.pegasus:data:24.0.2'
-  compile 'com.linkedin.pegasus:data-avro:24.0.2'
-  compile 'com.fasterxml.jackson.core:jackson-core:2.9.9'
+final Properties props = new Properties()
+final String propertiesBasePath = 'src/main/resources/schematranslator'
+final String appPropertiesPath = "${propertiesBasePath}/app.properties"
+final String userPropertiesPath = "${propertiesBasePath}/user.properties"
 
+// Load primary app properties
+file(appPropertiesPath).withInputStream { props.load(it) }
+
+// Load custom user properties
+try {
+  file(userPropertiesPath).withInputStream { props.load(it) }
+} catch (FileNotFoundException e) {
+  logger.warn("No custom user properties are defined at '${userPropertiesPath}'")
 }
 
+// Assign variables for needed properties
+final String version = props.getProperty("version")
+final String pegasusVersion = props.getProperty("pegasus.version")
+final String customDataJarPath = props.getProperty("pegasus.data.customJarPath", null)
+
+if (customDataJarPath == null) {
+  // Use standard dependencies
+  logger.quiet("Using standard dependencies, pegasus version '${pegasusVersion}'")
+
+  dependencies {
+    compile "com.linkedin.pegasus:data:${pegasusVersion}"
+    compile "com.linkedin.pegasus:data-avro:${pegasusVersion}"
+    compile 'com.fasterxml.jackson.core:jackson-core:2.9.9'
+  }
+} else {
+  // Use custom data module JAR
+  logger.quiet("Using pegasus version '${pegasusVersion}' with custom data module JAR at '${customDataJarPath}'")
+
+  configurations.all {
+    exclude group: 'com.linkedin.pegasus', module: 'data'
+  }
+
+  dependencies {
+    compile files(customDataJarPath)
+    compile "com.linkedin.pegasus:data-avro:${pegasusVersion}"
+    compile 'com.fasterxml.jackson.core:jackson-core:2.9.9'
+
+    compile "com.linkedin.pegasus:entity-stream:${pegasusVersion}"
+    compile "com.linkedin.pegasus:data-testutils:${pegasusVersion}"
+    compile 'org.apache.commons:commons-lang3:3.4'
+    compile 'org.antlr:antlr4:4.5'
+    compile 'org.antlr:antlr4-runtime:4.5'
+
+  }
+}
+
+// Task for generating a fat jar
 jar {
   manifest {
     attributes 'Main-Class': 'schematranslator.Main'
@@ -25,10 +65,16 @@ jar {
     configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
   }
   version
+
+  doLast {
+    logger.warn("Generated fat JAR for version ${version}")
+  }
 }
 
 //noinspection GroovyAssignabilityCheck
-task version {
-  description 'Print current version of this application'
-  println version
+task printProperties {
+  doLast {
+    description 'Print current version of this application'
+    logger.quiet(props.toString())
+  }
 }
