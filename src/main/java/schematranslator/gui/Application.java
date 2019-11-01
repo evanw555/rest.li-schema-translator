@@ -20,6 +20,7 @@ import schematranslator.AppProperties;
 import schematranslator.FileUtil;
 import schematranslator.SchemaParserUtil;
 import schematranslator.updates.UpdateChecker;
+import schematranslator.updates.UpdateInfo;
 
 
 public class Application implements Runnable {
@@ -59,14 +60,13 @@ public class Application implements Runnable {
     // Check for updates
     UpdateChecker updateChecker = new UpdateChecker();
     try {
-      updateChecker.checkForUpdates(updateInfo -> {
-        if (updateInfo.isUpdateAvailable()) {
-          frame.add(new UpdateLabel(updateInfo), BorderLayout.NORTH);
-          frame.validate();
-          frame.repaint();
-        }
-      });
-    } catch (IOException e) {
+      UpdateInfo updateInfo = updateChecker.checkForUpdates();
+      if (updateInfo.isUpdateAvailable()) {
+        frame.add(new UpdateLabel(updateInfo), BorderLayout.NORTH);
+        frame.validate();
+        frame.repaint();
+      }
+    } catch (Exception e) {
       e.printStackTrace();
     }
   }
@@ -123,15 +123,14 @@ public class Application implements Runnable {
     checkUpdates.addActionListener((actionEvent) -> {
       UpdateChecker updateChecker = new UpdateChecker();
       try {
-        updateChecker.checkForUpdates((updateInfo) -> {
-          JOptionPane.showMessageDialog(frame,
-              new UpdateLabel(updateInfo),
-              "Check for Updates...",
-              JOptionPane.INFORMATION_MESSAGE);
-        });
-      } catch (IOException e) {
+        UpdateInfo updateInfo = updateChecker.checkForUpdates();
         JOptionPane.showMessageDialog(frame,
-            "Unable to check for updates:\n" + e,
+            new UpdateLabel(updateInfo),
+            "Check for Updates...",
+            JOptionPane.INFORMATION_MESSAGE);
+      } catch (Exception e) {
+        JOptionPane.showMessageDialog(frame,
+            "Unable to check for updates:\n" + e.getMessage(),
             "Check for Updates...",
             JOptionPane.ERROR_MESSAGE);
       }
