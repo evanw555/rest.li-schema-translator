@@ -41,7 +41,7 @@ public class Application implements Runnable {
   private ErrorMessagePanel _errorMessagePanel;
 
   public Application() {
-    frame = new JFrame(APP_NAME);
+    frame = new JFrame(String.format("%s %s", APP_NAME, AppProperties.getVersion()));
     frame.setLayout(new BorderLayout());
 
     addMenuBar();
