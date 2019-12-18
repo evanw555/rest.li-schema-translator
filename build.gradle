@@ -25,6 +25,9 @@ final String version = props.getProperty("version")
 final String pegasusVersion = props.getProperty("pegasus.version")
 final String customDataJarPath = props.getProperty("pegasus.data.customJarPath", null)
 
+// Dynamically set the project version using app properties
+project.version = version
+
 if (customDataJarPath == null) {
   // Use standard dependencies
   logger.quiet("Using standard dependencies, pegasus version '${pegasusVersion}'")
@@ -64,10 +67,9 @@ jar {
   from {
     configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
   }
-  version
 
   doLast {
-    logger.warn("Generated fat JAR for version ${version}")
+    logger.lifecycle("Generated fat JAR for version ${version}")
   }
 }
 
