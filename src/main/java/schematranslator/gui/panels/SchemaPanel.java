@@ -1,9 +1,10 @@
-package schematranslator.gui;
+package schematranslator.gui.panels;
 
 import java.awt.*;
 import java.util.function.Consumer;
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
+import schematranslator.gui.SimpleDocumentListener;
 
 
 public class SchemaPanel extends JPanel {

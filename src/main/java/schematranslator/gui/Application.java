@@ -1,7 +1,6 @@
 package schematranslator.gui;
 
 import com.linkedin.data.avro.DataToAvroSchemaTranslationOptions;
-import com.linkedin.data.avro.OptionalDefaultMode;
 import com.linkedin.data.avro.SchemaTranslator;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.JsonBuilder;
@@ -19,6 +18,9 @@ import javax.swing.*;
 import schematranslator.AppProperties;
 import schematranslator.FileUtil;
 import schematranslator.SchemaParserUtil;
+import schematranslator.gui.panels.AvroOptionsPanel;
+import schematranslator.gui.panels.ErrorMessagePanel;
+import schematranslator.gui.panels.SchemaPanel;
 import schematranslator.updates.UpdateChecker;
 import schematranslator.updates.UpdateInfo;
 
@@ -35,10 +37,8 @@ public class Application implements Runnable {
   private SchemaPanel pegasusPanel, avroPanel, pdlPanel;
   private JCheckBoxMenuItem showPegasus, showAvro, showPdl;
 
-  private JComboBox<OptionalDefaultMode> avroOptionalDefault;
-  private JCheckBox avroOverrideNamespace;
-
   private ErrorMessagePanel _errorMessagePanel;
+  private AvroOptionsPanel _avroOptionsPanel;
 
   public Application() {
     frame = new JFrame(String.format("%s %s", APP_NAME, AppProperties.getVersion()));
@@ -204,24 +204,15 @@ public class Application implements Runnable {
 
   private void addLowerPanel() {
     JTabbedPane tabbedPane = new JTabbedPane();
+    final Dimension size = new Dimension(1000, 120);
+    tabbedPane.setPreferredSize(size);
+    tabbedPane.setMaximumSize(size);
 
     _errorMessagePanel = new ErrorMessagePanel();
     tabbedPane.addTab("Errors", _errorMessagePanel);
 
-    JPanel optionsPanel = new JPanel();
-    optionsPanel.setBorder(BorderFactory.createTitledBorder("DataToAvroSchemaTranslationOptions"));
-    optionsPanel.setLayout(new GridLayout(0, 2, 16, 0));
-
-    avroOptionalDefault = new JComboBox<>(OptionalDefaultMode.values());
-    avroOptionalDefault.addActionListener(actionEvent -> updatePanels(null));
-    optionsPanel.add(new JLabel("generator.avro.optional.default", SwingConstants.RIGHT));
-    optionsPanel.add(avroOptionalDefault);
-
-    avroOverrideNamespace = new JCheckBox();
-    avroOverrideNamespace.addItemListener(itemEvent -> updatePanels(null));
-    optionsPanel.add(new JLabel("generator.avro.namespace.override", SwingConstants.RIGHT));
-    optionsPanel.add(avroOverrideNamespace);
-    tabbedPane.addTab("Avro Options", optionsPanel);
+    _avroOptionsPanel = new AvroOptionsPanel(() -> updatePanels(null));
+    tabbedPane.addTab("Avro Options", _avroOptionsPanel);
 
     frame.add(tabbedPane, BorderLayout.SOUTH);
   }
@@ -265,10 +256,12 @@ public class Application implements Runnable {
       }
 
       if (except != avroPanel) {
-        String avroText = SchemaTranslator.dataToAvroSchemaJson(dataSchema,
-            new DataToAvroSchemaTranslationOptions(JsonBuilder.Pretty.INDENTED)
-                .setOptionalDefaultMode((OptionalDefaultMode) avroOptionalDefault.getSelectedItem())
-                .setOverrideNamespace(avroOverrideNamespace.isSelected()));
+        DataToAvroSchemaTranslationOptions options = new DataToAvroSchemaTranslationOptions(JsonBuilder.Pretty.INDENTED)
+            .setOptionalDefaultMode(_avroOptionsPanel.getAvroOptionalDefault())
+            .setDefaultFieldTranslationMode(_avroOptionsPanel.getDefaultFieldTranslationMode())
+            .setOverrideNamespace(_avroOptionsPanel.isAvroOverrideNamespace());
+        options.setTyperefPropertiesExcludeSet(_avroOptionsPanel.getTyperefPropertiesExcludeSet());
+        String avroText = SchemaTranslator.dataToAvroSchemaJson(dataSchema, options);
         avroPanel.setError(false);
         avroPanel.setText(avroText);
       }

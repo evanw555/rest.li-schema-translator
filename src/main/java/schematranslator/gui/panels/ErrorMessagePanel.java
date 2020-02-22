@@ -1,4 +1,4 @@
-package schematranslator.gui;
+package schematranslator.gui.panels;
 
 import java.awt.*;
 import javax.swing.*;
@@ -17,10 +17,9 @@ public class ErrorMessagePanel extends JPanel {
                                              JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                                              JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
-    final Dimension size = new Dimension(800, 64);
-    scrollPane.setMaximumSize(size);
-    scrollPane.setPreferredSize(size);
-    this.add(scrollPane);
+    this.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+    this.setLayout(new BorderLayout());
+    this.add(scrollPane, BorderLayout.CENTER);
 
     clear();
   }
